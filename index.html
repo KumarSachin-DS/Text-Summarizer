@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Summarizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #urlInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        #urlInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-card h3 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-card p {
+            color: #555;
+            line-height: 1.8;
+            font-size: 1em;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left-color: #764ba2;
+        }
+
+        .error {
+            background: #fee;
+            border-left-color: #f44336;
+            color: #c62828;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .icon {
+            font-size: 1.5em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span class="icon">🤖</span> AI Text Summarizer</h1>
+            <p>Transform lengthy articles into concise summaries</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input type="text" id="urlInput" placeholder="Paste article URL here...">
+                <button onclick="summarizeArticle()" id="summarizeBtn">
+                    <span class="icon">✨</span> Summarize
+                </button>
+            </div>
+            <div class="error" id="errorMsg"></div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing article and generating summary...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-card">
+                <h3><span class="icon">📄</span> Original Article Snippet</h3>
+                <p id="articleSnippet"></p>
+            </div>
+            <div class="result-card summary-card">
+                <h3><span class="icon">⚡</span> AI-Generated Summary</h3>
+                <p id="summary"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function summarizeArticle() {
+            const url = document.getElementById("urlInput").value.trim();
+            const btn = document.getElementById("summarizeBtn");
+            const loading = document.getElementById("loading");
+            const result = document.getElementById("result");
+            const errorMsg = document.getElementById("errorMsg");
+
+            errorMsg.classList.remove("show");
+            result.classList.remove("show");
+
+            if (!url) {
+                showError("Please enter a valid URL");
+                return;
+            }
+
+            btn.disabled = true;
+            loading.style.display = "block";
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/summarize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById("articleSnippet").innerText = data.article_snippet + "...";
+                    document.getElementById("summary").innerText = data.summary;
+                    result.classList.add("show");
+                } else {
+                    showError(data.error || "Failed to summarize article");
+                }
+            } catch (error) {
+                showError("Network error. Please check your connection and try again.");
+            } finally {
+                btn.disabled = false;
+                loading.style.display = "none";
+            }
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById("errorMsg");
+            errorMsg.innerText = message;
+            errorMsg.classList.add("show");
+        }
+
+        document.getElementById("urlInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                summarizeArticle();
+            }
+        });
+    </script>
+</body>
+</html>

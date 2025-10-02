@@ -1,0 +1,6 @@
+flask
+flask-cors
+newspaper3k
+transformers
+torch
+lxml_html_clean
